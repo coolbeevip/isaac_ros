@@ -32,7 +32,7 @@ coolbeevip/isaac_ros:manipulation-isaac_ros_28556f8bc78a98822bd08b2d7c6fcf9b-amd
 
 ## Layers
 
-`base` installs common Isaac ROS packages for image processing, DNN inference, visual SLAM, nvblox, AprilTag, and benchmarking.
+`base` installs common Isaac ROS packages for examples, image processing, DNN inference, visual SLAM, nvblox, AprilTag, and benchmarking.
 
 `perception` extends `base` with object detection, segmentation, FoundationPose, and FoundationStereo packages.
 
@@ -54,4 +54,3 @@ Required repository secrets:
 DOCKER_HUB_USERNAME
 DOCKER_HUB_ACCESS_TOKEN
 ```
-
