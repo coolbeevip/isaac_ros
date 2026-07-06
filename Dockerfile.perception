@@ -1,0 +1,18 @@
+ARG BASE_IMAGE
+FROM ${BASE_IMAGE}
+
+ARG DEBIAN_FRONTEND=noninteractive
+ARG ROS_DISTRO=jazzy
+
+LABEL org.opencontainers.image.title="isaac_ros:perception"
+LABEL org.opencontainers.image.description="Isaac ROS perception image with object detection, segmentation, foundation pose, and stereo packages"
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ros-${ROS_DISTRO}-isaac-ros-yolov8-examples \
+    ros-${ROS_DISTRO}-isaac-ros-rtdetr-examples \
+    ros-${ROS_DISTRO}-isaac-ros-segformer-examples \
+    ros-${ROS_DISTRO}-isaac-ros-segment-anything2-examples \
+    ros-${ROS_DISTRO}-isaac-ros-foundationpose-examples \
+    ros-${ROS_DISTRO}-isaac-ros-foundationstereo-examples \
+    && rm -rf /var/lib/apt/lists/*
+
