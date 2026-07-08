@@ -1,0 +1,6 @@
+# IDE/editor local state
+.idea/
+.vscode/
+
+# macOS local files
+.DS_Store

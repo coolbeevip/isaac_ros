@@ -11,6 +11,9 @@ RUN apt-get clean \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get update \
     && apt-get install -y --no-install-recommends \
+    usbutils \
+    v4l-utils \
+    ffmpeg \
     ros-${ROS_DISTRO}-isaac-ros-yolov8 \
     ros-${ROS_DISTRO}-isaac-ros-rtdetr \
     ros-${ROS_DISTRO}-isaac-ros-rtdetr-models-install \
