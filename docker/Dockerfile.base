@@ -4,7 +4,7 @@ FROM ${ISAAC_ROS_BASE_IMAGE}
 ARG ROS_DISTRO=jazzy
 
 LABEL org.opencontainers.image.title="phys-ros:base"
-LABEL org.opencontainers.image.description="Isaac ROS Jazzy base with phys-ros build and quality tools"
+LABEL org.opencontainers.image.description="Isaac ROS Jazzy base with common ROS build, runtime, and quality tools"
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -19,7 +19,20 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         ethtool \
         git \
         iproute2 \
+        python3-numpy \
         python3-pip \
         python3-venv \
+        python3-yaml \
+        ros-${ROS_DISTRO}-ament-cmake \
+        ros-${ROS_DISTRO}-ament-cmake-python \
+        ros-${ROS_DISTRO}-builtin-interfaces \
+        ros-${ROS_DISTRO}-geometry-msgs \
+        ros-${ROS_DISTRO}-launch \
+        ros-${ROS_DISTRO}-launch-ros \
+        ros-${ROS_DISTRO}-rclpy \
+        ros-${ROS_DISTRO}-rosidl-default-generators \
+        ros-${ROS_DISTRO}-rosidl-default-runtime \
+        ros-${ROS_DISTRO}-sensor-msgs \
+        ros-${ROS_DISTRO}-std-msgs \
         ros-dev-tools \
         usbutils
