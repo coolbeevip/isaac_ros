@@ -5,12 +5,14 @@ on:
     branches:
       - main
     paths:
-      - Dockerfile
-      - Dockerfile.perception
-      - Dockerfile.manipulation
+      - docker/**
       - .dockerignore
       - .github/workflows/docker.yml
   workflow_dispatch:
+
+concurrency:
+  group: docker-${{ github.ref }}
+  cancel-in-progress: false
 
 env:
   IMAGE_NAME: ${{ secrets.DOCKER_HUB_USERNAME }}/isaac_ros
@@ -19,6 +21,8 @@ env:
 jobs:
   base:
     runs-on: ubuntu-latest
+    outputs:
+      digest: ${{ steps.build.outputs.digest }}
     steps:
       - name: Check Out Repo
         uses: actions/checkout@v4
@@ -40,14 +44,15 @@ jobs:
           tags: |
             type=raw,value=base
             type=raw,value=base-${{ env.ISAAC_ROS_TAG }}
+            type=sha,prefix=base-
             type=raw,value=latest
 
       - name: Build and Push
-        id: docker_build
+        id: build
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: ./Dockerfile
+          file: ./docker/Dockerfile.base
           push: true
           platforms: linux/amd64
           tags: ${{ steps.meta.outputs.tags }}
@@ -56,11 +61,13 @@ jobs:
           cache-to: type=gha,mode=max,scope=base
 
       - name: Image Digest
-        run: echo ${{ steps.docker_build.outputs.digest }}
+        run: echo "${{ steps.build.outputs.digest }}"
 
   perception:
     runs-on: ubuntu-latest
     needs: base
+    outputs:
+      digest: ${{ steps.build.outputs.digest }}
     steps:
       - name: Check Out Repo
         uses: actions/checkout@v4
@@ -82,28 +89,31 @@ jobs:
           tags: |
             type=raw,value=perception
             type=raw,value=perception-${{ env.ISAAC_ROS_TAG }}
+            type=sha,prefix=perception-
 
       - name: Build and Push
-        id: docker_build
+        id: build
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: ./Dockerfile.perception
+          file: ./docker/Dockerfile.perception
           push: true
           platforms: linux/amd64
           build-args: |
-            BASE_IMAGE=${{ env.IMAGE_NAME }}:base
+            BASE_IMAGE=${{ env.IMAGE_NAME }}@${{ needs.base.outputs.digest }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha,scope=perception
           cache-to: type=gha,mode=max,scope=perception
 
       - name: Image Digest
-        run: echo ${{ steps.docker_build.outputs.digest }}
+        run: echo "${{ steps.build.outputs.digest }}"
 
   manipulation:
     runs-on: ubuntu-latest
     needs: perception
+    outputs:
+      digest: ${{ steps.build.outputs.digest }}
     steps:
       - name: Check Out Repo
         uses: actions/checkout@v4
@@ -125,21 +135,22 @@ jobs:
           tags: |
             type=raw,value=manipulation
             type=raw,value=manipulation-${{ env.ISAAC_ROS_TAG }}
+            type=sha,prefix=manipulation-
 
       - name: Build and Push
-        id: docker_build
+        id: build
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: ./Dockerfile.manipulation
+          file: ./docker/Dockerfile.manipulation
           push: true
           platforms: linux/amd64
           build-args: |
-            BASE_IMAGE=${{ env.IMAGE_NAME }}:perception
+            BASE_IMAGE=${{ env.IMAGE_NAME }}@${{ needs.perception.outputs.digest }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha,scope=manipulation
           cache-to: type=gha,mode=max,scope=manipulation
 
       - name: Image Digest
-        run: echo ${{ steps.docker_build.outputs.digest }}
+        run: echo "${{ steps.build.outputs.digest }}"

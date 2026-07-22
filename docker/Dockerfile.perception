@@ -1,0 +1,23 @@
+ARG BASE_IMAGE=phys-ros:base
+FROM ${BASE_IMAGE}
+
+ARG ROS_DISTRO=jazzy
+LABEL org.opencontainers.image.title="phys-ros:perception"
+LABEL org.opencontainers.image.description="Reusable Isaac ROS perception and image-processing dependencies"
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+SHELL ["/bin/bash", "-c"]
+
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt/lists,sharing=locked \
+    apt-get update \
+    && apt-get install -y --no-install-recommends \
+        ffmpeg \
+        ros-${ROS_DISTRO}-isaac-ros-depth-image-proc \
+        ros-${ROS_DISTRO}-isaac-ros-dnn-image-encoder \
+        ros-${ROS_DISTRO}-isaac-ros-image-proc \
+        ros-${ROS_DISTRO}-isaac-ros-stereo-image-proc \
+        ros-${ROS_DISTRO}-isaac-ros-tensor-proc \
+        ros-${ROS_DISTRO}-isaac-ros-tensor-rt \
+        v4l-utils

@@ -1,0 +1,25 @@
+ARG ISAAC_ROS_BASE_IMAGE=nvcr.io/nvidia/isaac/ros:isaac_ros_28556f8bc78a98822bd08b2d7c6fcf9b-amd64@sha256:c6f5954e318babdcfd152584e03ef68392f309579153f2cd25f788ef7a7046f0
+FROM ${ISAAC_ROS_BASE_IMAGE}
+
+ARG ROS_DISTRO=jazzy
+
+LABEL org.opencontainers.image.title="phys-ros:base"
+LABEL org.opencontainers.image.description="Isaac ROS Jazzy base with phys-ros build and quality tools"
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+SHELL ["/bin/bash", "-c"]
+
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt/lists,sharing=locked \
+    apt-get update \
+    && apt-get install -y --no-install-recommends \
+        build-essential \
+        can-utils \
+        ethtool \
+        git \
+        iproute2 \
+        python3-pip \
+        python3-venv \
+        ros-dev-tools \
+        usbutils
