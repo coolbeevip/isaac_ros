@@ -15,11 +15,12 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  IMAGE_NAME: ${{ secrets.DOCKER_HUB_USERNAME }}/isaac_ros
+  IMAGE_NAME: ${{ secrets.DOCKER_HUB_USERNAME }}/phys-ros
   ISAAC_ROS_TAG: isaac_ros_28556f8bc78a98822bd08b2d7c6fcf9b-amd64
+  ROS_BASE_TAG: jazzy-ros-base-noble
 
 jobs:
-  base:
+  ros_base:
     runs-on: ubuntu-latest
     outputs:
       digest: ${{ steps.build.outputs.digest }}
@@ -42,6 +43,52 @@ jobs:
         with:
           images: ${{ env.IMAGE_NAME }}
           tags: |
+            type=raw,value=ros-base
+            type=raw,value=ros-base-${{ env.ROS_BASE_TAG }}
+            type=sha,prefix=ros-base-
+
+      - name: Build and Push
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./docker/ros/Dockerfile.base
+          push: true
+          platforms: linux/amd64
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=ros-base
+          cache-to: type=gha,mode=max,scope=ros-base
+
+      - name: Image Digest
+        run: echo "${{ steps.build.outputs.digest }}"
+
+  isaac_base:
+    runs-on: ubuntu-latest
+    outputs:
+      digest: ${{ steps.build.outputs.digest }}
+    steps:
+      - name: Check Out Repo
+        uses: actions/checkout@v4
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Docker Metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=isaac-base
+            type=raw,value=isaac-base-${{ env.ISAAC_ROS_TAG }}
+            type=sha,prefix=isaac-base-
             type=raw,value=base
             type=raw,value=base-${{ env.ISAAC_ROS_TAG }}
             type=sha,prefix=base-
@@ -52,20 +99,20 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: ./docker/Dockerfile.base
+          file: ./docker/isaac-ros/Dockerfile.base
           push: true
           platforms: linux/amd64
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha,scope=base
-          cache-to: type=gha,mode=max,scope=base
+          cache-from: type=gha,scope=isaac-base
+          cache-to: type=gha,mode=max,scope=isaac-base
 
       - name: Image Digest
         run: echo "${{ steps.build.outputs.digest }}"
 
-  perception:
+  isaac_perception:
     runs-on: ubuntu-latest
-    needs: base
+    needs: isaac_base
     outputs:
       digest: ${{ steps.build.outputs.digest }}
     steps:
@@ -87,6 +134,9 @@ jobs:
         with:
           images: ${{ env.IMAGE_NAME }}
           tags: |
+            type=raw,value=isaac-perception
+            type=raw,value=isaac-perception-${{ env.ISAAC_ROS_TAG }}
+            type=sha,prefix=isaac-perception-
             type=raw,value=perception
             type=raw,value=perception-${{ env.ISAAC_ROS_TAG }}
             type=sha,prefix=perception-
@@ -96,22 +146,22 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: ./docker/Dockerfile.perception
+          file: ./docker/isaac-ros/Dockerfile.perception
           push: true
           platforms: linux/amd64
           build-args: |
-            BASE_IMAGE=${{ env.IMAGE_NAME }}@${{ needs.base.outputs.digest }}
+            BASE_IMAGE=${{ env.IMAGE_NAME }}@${{ needs.isaac_base.outputs.digest }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha,scope=perception
-          cache-to: type=gha,mode=max,scope=perception
+          cache-from: type=gha,scope=isaac-perception
+          cache-to: type=gha,mode=max,scope=isaac-perception
 
       - name: Image Digest
         run: echo "${{ steps.build.outputs.digest }}"
 
-  manipulation:
+  isaac_manipulation:
     runs-on: ubuntu-latest
-    needs: perception
+    needs: isaac_perception
     outputs:
       digest: ${{ steps.build.outputs.digest }}
     steps:
@@ -133,6 +183,9 @@ jobs:
         with:
           images: ${{ env.IMAGE_NAME }}
           tags: |
+            type=raw,value=isaac-manipulation
+            type=raw,value=isaac-manipulation-${{ env.ISAAC_ROS_TAG }}
+            type=sha,prefix=isaac-manipulation-
             type=raw,value=manipulation
             type=raw,value=manipulation-${{ env.ISAAC_ROS_TAG }}
             type=sha,prefix=manipulation-
@@ -142,15 +195,15 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: ./docker/Dockerfile.manipulation
+          file: ./docker/isaac-ros/Dockerfile.manipulation
           push: true
           platforms: linux/amd64
           build-args: |
-            BASE_IMAGE=${{ env.IMAGE_NAME }}@${{ needs.perception.outputs.digest }}
+            BASE_IMAGE=${{ env.IMAGE_NAME }}@${{ needs.isaac_perception.outputs.digest }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha,scope=manipulation
-          cache-to: type=gha,mode=max,scope=manipulation
+          cache-from: type=gha,scope=isaac-manipulation
+          cache-to: type=gha,mode=max,scope=isaac-manipulation
 
       - name: Image Digest
         run: echo "${{ steps.build.outputs.digest }}"

@@ -1,20 +1,23 @@
-# Isaac ROS Docker Images
+# ROS 2 and Isaac ROS Docker Images
 
 This repository is the GitHub Actions publishing mirror for the reusable Docker
 layers defined in the `phys-ros` repository. The canonical Dockerfiles remain in
 `phys-ros/docker`; changes must be made there first and then synchronized here.
 
-The published image chain is:
+The published image chains are:
 
 ```text
+ROS 2 Jazzy
+  └── ros-base
+
 NVIDIA Isaac ROS (pinned digest)
-  └── base
-      └── perception
-          └── manipulation
+  └── isaac-base
+      └── isaac-perception
+          └── isaac-manipulation
 ```
 
 Visual perception is a required part of the robot manipulation stack, so the
-`manipulation` image intentionally extends `perception`.
+`isaac-manipulation` image intentionally extends `isaac-perception`.
 
 ## Source boundary
 
@@ -22,52 +25,74 @@ The following files are byte-for-byte mirrors of their canonical `phys-ros`
 counterparts:
 
 ```text
-docker/Dockerfile.base
-docker/Dockerfile.perception
-docker/Dockerfile.manipulation
+docker/ros/Dockerfile.base
+docker/isaac-ros/Dockerfile.base
+docker/isaac-ros/Dockerfile.perception
+docker/isaac-ros/Dockerfile.manipulation
+docker/scripts/workspace-entrypoint.sh
 ```
 
-The project-specific `phys-ros:dev` image is not mirrored or published here. It
-depends on the `phys-ros` source tree, Orbbec driver, Piper dependencies, and
-development requirements, so it remains owned and built by `phys-ros`.
+The project-specific `docker/ros/Dockerfile.dev` and
+`docker/isaac-ros/Dockerfile.dev` images are not mirrored or published here.
+They depend on the complete `phys-ros` source tree, Orbbec driver, Piper
+dependencies, and development requirements, so they remain owned and built by
+`phys-ros`.
 
 ## Published images
 
 The GitHub Actions workflow publishes images to Docker Hub under:
 
 ```text
-coolbeevip/isaac_ros
+coolbeevip/phys-ros
 ```
 
-Each layer receives a floating tag, an Isaac ROS base-version tag, and a
-source-commit-specific tag:
+The native ROS 2 base receives a floating tag, an upstream base-version tag,
+and a source-commit-specific tag:
 
 ```text
-coolbeevip/isaac_ros:base
-coolbeevip/isaac_ros:base-isaac_ros_28556f8bc78a98822bd08b2d7c6fcf9b-amd64
-coolbeevip/isaac_ros:base-<git-sha>
-
-coolbeevip/isaac_ros:perception
-coolbeevip/isaac_ros:perception-isaac_ros_28556f8bc78a98822bd08b2d7c6fcf9b-amd64
-coolbeevip/isaac_ros:perception-<git-sha>
-
-coolbeevip/isaac_ros:manipulation
-coolbeevip/isaac_ros:manipulation-isaac_ros_28556f8bc78a98822bd08b2d7c6fcf9b-amd64
-coolbeevip/isaac_ros:manipulation-<git-sha>
+coolbeevip/phys-ros:ros-base
+coolbeevip/phys-ros:ros-base-jazzy-ros-base-noble
+coolbeevip/phys-ros:ros-base-<git-sha>
 ```
 
-`latest` remains an alias for the current `base` image for backward
-compatibility. Deployments and downstream Dockerfiles should use a commit tag or
-image digest instead of a floating tag.
+Each Isaac ROS layer receives a floating tag, an Isaac ROS base-version tag,
+and a source-commit-specific tag:
 
-For example, `phys-ros:dev` can be built from a published manipulation image
-without changing its canonical Dockerfile:
+```text
+coolbeevip/phys-ros:isaac-base
+coolbeevip/phys-ros:isaac-base-isaac_ros_28556f8bc78a98822bd08b2d7c6fcf9b-amd64
+coolbeevip/phys-ros:isaac-base-<git-sha>
+
+coolbeevip/phys-ros:isaac-perception
+coolbeevip/phys-ros:isaac-perception-isaac_ros_28556f8bc78a98822bd08b2d7c6fcf9b-amd64
+coolbeevip/phys-ros:isaac-perception-<git-sha>
+
+coolbeevip/phys-ros:isaac-manipulation
+coolbeevip/phys-ros:isaac-manipulation-isaac_ros_28556f8bc78a98822bd08b2d7c6fcf9b-amd64
+coolbeevip/phys-ros:isaac-manipulation-<git-sha>
+```
+
+The former `base`, `perception`, and `manipulation` tags are published as
+compatibility aliases. `latest` also remains an alias for the current
+`isaac-base` image. Deployments and downstream Dockerfiles should use a commit
+tag or image digest instead of a floating tag.
+
+For example, the project-specific development images can be built from the
+published reusable layers while running from the canonical `phys-ros` source
+root:
 
 ```bash
 docker buildx build \
-  --build-arg BASE_IMAGE=coolbeevip/isaac_ros:manipulation-<git-sha> \
-  --file docker/Dockerfile.dev \
-  --tag phys-ros:dev \
+  --build-arg BASE_IMAGE=coolbeevip/phys-ros:ros-base-<git-sha> \
+  --file docker/ros/Dockerfile.dev \
+  --tag phys-ros:ros-dev \
+  --load \
+  .
+
+docker buildx build \
+  --build-arg BASE_IMAGE=coolbeevip/phys-ros:isaac-manipulation-<git-sha> \
+  --file docker/isaac-ros/Dockerfile.dev \
+  --tag phys-ros:isaac-dev \
   --load \
   .
 ```
@@ -77,13 +102,15 @@ docker buildx build \
 The workflow in `.github/workflows/docker.yml` runs when mirrored Docker files
 change on `main`, or when started manually. It:
 
-1. Builds and pushes `base`.
-2. Passes the resulting image digest to the `perception` build.
-3. Passes the resulting `perception` digest to the `manipulation` build.
-4. Uses separate GitHub Actions caches for all three layers.
+1. Builds and pushes the independent `ros-base` image.
+2. Builds and pushes `isaac-base`.
+3. Passes the resulting digest to the `isaac-perception` build.
+4. Passes the resulting `isaac-perception` digest to the
+   `isaac-manipulation` build.
+5. Uses separate GitHub Actions caches for all four layers.
 
-Digest chaining ensures every published image set comes from the same workflow
-run even though the floating Docker Hub tags can change.
+Digest chaining ensures every published Isaac image set comes from the same
+workflow run even though the floating Docker Hub tags can change.
 
 Required repository secrets:
 

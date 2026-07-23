@@ -1,8 +1,9 @@
-ARG BASE_IMAGE=phys-ros:base
+ARG BASE_IMAGE=phys-ros:isaac-base
 FROM ${BASE_IMAGE}
 
 ARG ROS_DISTRO=jazzy
-LABEL org.opencontainers.image.title="phys-ros:perception"
+
+LABEL org.opencontainers.image.title="phys-ros:isaac-perception"
 LABEL org.opencontainers.image.description="Reusable Isaac ROS perception and image-processing dependencies"
 
 ENV DEBIAN_FRONTEND=noninteractive
