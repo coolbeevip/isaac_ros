@@ -112,7 +112,25 @@ docker buildx build \
 ## GitHub Actions
 
 The workflow in `.github/workflows/docker.yml` runs when mirrored Docker files
-change on `main`, or when started manually. It:
+change on `main`, or when started manually. Push builds are selective and
+cascade only toward dependent layers:
+
+| Changed input | Rebuilt images |
+| --- | --- |
+| `docker/ros/Dockerfile.base` | `ros-base`, `ros-dev` |
+| `docker/ros/Dockerfile.dev` | `ros-dev` |
+| `docker/isaac-ros/Dockerfile.base` | Entire Isaac ROS chain |
+| `docker/isaac-ros/Dockerfile.perception` | `isaac-perception`, `isaac-manipulation`, `isaac-dev` |
+| `docker/isaac-ros/Dockerfile.manipulation` | `isaac-manipulation`, `isaac-dev` |
+| `docker/isaac-ros/Dockerfile.dev` | `isaac-dev` |
+| `docker/scripts/**` | Both complete chains |
+| `.dockerignore` or this workflow | All images |
+
+Manual workflow dispatches rebuild all images. During a selective build, an
+unchanged parent is referenced by its published floating tag. A parent rebuilt
+in the same run is passed to its child by digest.
+
+The workflow then:
 
 1. Builds and pushes `ros-base`, then passes its digest to the `ros-dev` build.
 2. Builds and pushes `isaac-base` independently.

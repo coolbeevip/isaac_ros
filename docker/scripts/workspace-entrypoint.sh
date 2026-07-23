@@ -45,7 +45,9 @@ export LOGNAME="${target_user}"
 
 if [[ -n "${ROS_DISTRO:-}" && -f "/opt/ros/${ROS_DISTRO}/setup.bash" ]]; then
   # shellcheck disable=SC1090
+  set +u
   source "/opt/ros/${ROS_DISTRO}/setup.bash"
+  set -u
 fi
 
 exec gosu "${target_user}" "$@"
