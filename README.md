@@ -138,7 +138,9 @@ The workflow then:
 4. Passes the resulting `isaac-perception` digest to the
    `isaac-manipulation` build.
 5. Passes the resulting `isaac-manipulation` digest to the `isaac-dev` build.
-6. Uses separate GitHub Actions caches for all six layers.
+6. Uses a separate registry-backed BuildKit cache tag for each layer. Cache
+   export errors are non-blocking, so they cannot fail an otherwise successful
+   image build and push.
 
 Digest chaining ensures every published Isaac image set comes from the same
 workflow run even though the floating Docker Hub tags can change.

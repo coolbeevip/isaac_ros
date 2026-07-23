@@ -169,8 +169,8 @@ jobs:
           platforms: linux/amd64
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha,scope=ros-base
-          cache-to: type=gha,mode=max,scope=ros-base
+          cache-from: type=registry,ref=${{ env.IMAGE_NAME }}:buildcache-ros-base
+          cache-to: type=registry,ref=${{ env.IMAGE_NAME }}:buildcache-ros-base,mode=max,ignore-error=true
 
   ros_dev:
     runs-on: ubuntu-latest
@@ -218,8 +218,8 @@ jobs:
             BASE_IMAGE=${{ needs.changes.outputs.ros_base == 'true' && format('{0}@{1}', env.IMAGE_NAME, needs.ros_base.outputs.digest) || format('{0}:ros-base', env.IMAGE_NAME) }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha,scope=ros-dev
-          cache-to: type=gha,mode=max,scope=ros-dev
+          cache-from: type=registry,ref=${{ env.IMAGE_NAME }}:buildcache-ros-dev
+          cache-to: type=registry,ref=${{ env.IMAGE_NAME }}:buildcache-ros-dev,mode=max,ignore-error=true
 
   isaac_base:
     runs-on: ubuntu-latest
@@ -269,8 +269,8 @@ jobs:
           platforms: linux/amd64
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha,scope=isaac-base
-          cache-to: type=gha,mode=max,scope=isaac-base
+          cache-from: type=registry,ref=${{ env.IMAGE_NAME }}:buildcache-isaac-base
+          cache-to: type=registry,ref=${{ env.IMAGE_NAME }}:buildcache-isaac-base,mode=max,ignore-error=true
 
   isaac_perception:
     runs-on: ubuntu-latest
@@ -321,8 +321,8 @@ jobs:
             BASE_IMAGE=${{ needs.changes.outputs.isaac_base == 'true' && format('{0}@{1}', env.IMAGE_NAME, needs.isaac_base.outputs.digest) || format('{0}:isaac-base', env.IMAGE_NAME) }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha,scope=isaac-perception
-          cache-to: type=gha,mode=max,scope=isaac-perception
+          cache-from: type=registry,ref=${{ env.IMAGE_NAME }}:buildcache-isaac-perception
+          cache-to: type=registry,ref=${{ env.IMAGE_NAME }}:buildcache-isaac-perception,mode=max,ignore-error=true
 
   isaac_manipulation:
     runs-on: ubuntu-latest
@@ -373,8 +373,8 @@ jobs:
             BASE_IMAGE=${{ needs.changes.outputs.isaac_perception == 'true' && format('{0}@{1}', env.IMAGE_NAME, needs.isaac_perception.outputs.digest) || format('{0}:isaac-perception', env.IMAGE_NAME) }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha,scope=isaac-manipulation
-          cache-to: type=gha,mode=max,scope=isaac-manipulation
+          cache-from: type=registry,ref=${{ env.IMAGE_NAME }}:buildcache-isaac-manipulation
+          cache-to: type=registry,ref=${{ env.IMAGE_NAME }}:buildcache-isaac-manipulation,mode=max,ignore-error=true
 
   isaac_dev:
     runs-on: ubuntu-latest
@@ -422,5 +422,5 @@ jobs:
             BASE_IMAGE=${{ needs.changes.outputs.isaac_manipulation == 'true' && format('{0}@{1}', env.IMAGE_NAME, needs.isaac_manipulation.outputs.digest) || format('{0}:isaac-manipulation', env.IMAGE_NAME) }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha,scope=isaac-dev
-          cache-to: type=gha,mode=max,scope=isaac-dev
+          cache-from: type=registry,ref=${{ env.IMAGE_NAME }}:buildcache-isaac-dev
+          cache-to: type=registry,ref=${{ env.IMAGE_NAME }}:buildcache-isaac-dev,mode=max,ignore-error=true

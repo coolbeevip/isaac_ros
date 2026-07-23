@@ -4,21 +4,35 @@ FROM ${BASE_IMAGE}
 ARG ROS_DISTRO=jazzy
 ARG ORBBEC_REF=main
 ARG PIPER_SDK_VERSION=0.6.1
+ARG NUMPY_VERSION=1.26.4
+ARG PRE_COMMIT_VERSION=4.6.0
+ARG PYTEST_VERSION=7.4.4
+ARG PYYAML_VERSION=6.0.3
+ARG RUFF_VERSION=0.15.22
 
 LABEL org.opencontainers.image.title="phys-ros:ros-dev"
-LABEL org.opencontainers.image.description="ROS 2 development environment with Dabai and Piper dependencies"
+LABEL org.opencontainers.image.description="ROS 2 development environment with quality tools, Dabai, and Piper dependencies"
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV ORBBEC_WS=/opt/orbbec_sdk_v1_ws
 ENV PHYS_ROS_WS=/workspaces/phys-ros
-ENV PIP_BREAK_SYSTEM_PACKAGES=1
 ENV PIP_NO_CACHE_DIR=1
+ENV VIRTUAL_ENV=/opt/phys-ros-venv
+ENV PATH=${VIRTUAL_ENV}/bin:${PATH}
 
 SHELL ["/bin/bash", "-c"]
 
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt/lists,sharing=locked \
     apt-get update \
+    && apt-get install -y --no-install-recommends \
+        python3-pytest \
+        ros-${ROS_DISTRO}-ament-cmake-pytest \
+        ros-${ROS_DISTRO}-ament-copyright \
+        ros-${ROS_DISTRO}-ament-flake8 \
+        ros-${ROS_DISTRO}-ament-lint-auto \
+        ros-${ROS_DISTRO}-ament-lint-common \
+        ros-${ROS_DISTRO}-ament-pep257 \
     && mkdir -p "${ORBBEC_WS}/src" \
     && git clone --depth 1 --branch "${ORBBEC_REF}" --single-branch \
         https://github.com/orbbec/OrbbecSDK_ROS2.git \
@@ -39,7 +53,14 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         --event-handlers console_direct+ \
     && rm -rf "${ORBBEC_WS}/src" "${ORBBEC_WS}/build" "${ORBBEC_WS}/log"
 
-RUN python3 -m pip install "piper-sdk==${PIPER_SDK_VERSION}"
+RUN python3 -m venv --system-site-packages "${VIRTUAL_ENV}" \
+    && "${VIRTUAL_ENV}/bin/python" -m pip install \
+        "numpy==${NUMPY_VERSION}" \
+        "piper-sdk==${PIPER_SDK_VERSION}" \
+        "pre-commit==${PRE_COMMIT_VERSION}" \
+        "pytest==${PYTEST_VERSION}" \
+        "PyYAML==${PYYAML_VERSION}" \
+        "ruff==${RUFF_VERSION}"
 
 RUN usermod -aG dialout admin \
     && mkdir -p "${PHYS_ROS_WS}" \
