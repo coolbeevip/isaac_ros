@@ -3,6 +3,7 @@ FROM ${BASE_IMAGE}
 
 ARG ROS_DISTRO=jazzy
 ARG ORBBEC_REF=main
+ARG PIPER_SDK_VERSION=0.6.1
 
 LABEL org.opencontainers.image.title="phys-ros:ros-dev"
 LABEL org.opencontainers.image.description="ROS 2 development environment with MoveIt, Dabai, and Piper dependencies"
@@ -46,22 +47,7 @@ RUN mkdir -p "${ORBBEC_WS}/src" \
         --event-handlers console_direct+ \
     && rm -rf "${ORBBEC_WS}/src" "${ORBBEC_WS}/build" "${ORBBEC_WS}/log"
 
-RUN --mount=type=bind,source=.,target=/tmp/phys-ros-source,readonly \
-    --mount=type=cache,target=/var/cache/apt,sharing=locked \
-    --mount=type=cache,target=/var/lib/apt/lists,sharing=locked \
-    python3 -m pip install \
-        -r /tmp/phys-ros-source/requirements-dev.txt \
-        -r /tmp/phys-ros-source/requirements.txt \
-    && source "/opt/ros/${ROS_DISTRO}/setup.bash" \
-    && source "${ORBBEC_WS}/install/setup.bash" \
-    && rosdep install \
-        --from-paths \
-        /tmp/phys-ros-source/src/bringup/phys_bringup \
-        /tmp/phys-ros-source/src/capabilities/piper_dual_arm_xvla_adapter \
-        /tmp/phys-ros-source/src/sensors/cameras/orbbec/phys_orbbec_bringup \
-        /tmp/phys-ros-source/src/robots/arms/agilex/piper_ros/src/piper \
-        /tmp/phys-ros-source/src/robots/arms/agilex/piper_ros/src/piper_msgs \
-        --ignore-src --skip-keys orbbec_camera -r -y
+RUN python3 -m pip install "piper-sdk==${PIPER_SDK_VERSION}"
 
 RUN usermod -aG dialout admin \
     && mkdir -p "${PHYS_ROS_WS}" \

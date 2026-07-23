@@ -9,6 +9,7 @@ The published image chains are:
 ```text
 ROS 2 Jazzy
   └── ros-base
+      └── ros-dev
 
 NVIDIA Isaac ROS (pinned digest)
   └── isaac-base
@@ -37,11 +38,10 @@ This publishing repository intentionally does not copy the canonical
 Dockerfiles' alternate APT mirror configuration. Builds use the package sources
 provided by the upstream ROS and Isaac ROS base images.
 
-The project-specific `docker/ros/Dockerfile.dev` is mirrored for use with the
-complete `phys-ros` build context, but the current workflow does not publish it.
-The similarly project-specific `docker/isaac-ros/Dockerfile.dev` is not mirrored
-or published here. Both development images depend on the complete `phys-ros`
-source tree, Orbbec driver, Piper dependencies, and development requirements.
+The self-contained `docker/ros/Dockerfile.dev` is mirrored and published here.
+The project-specific `docker/isaac-ros/Dockerfile.dev` is not mirrored or
+published because it still depends on the complete `phys-ros` source tree and
+development requirements.
 
 ## Published images
 
@@ -58,6 +58,10 @@ and a source-commit-specific tag:
 coolbeevip/phys-ros:ros-base
 coolbeevip/phys-ros:ros-base-jazzy-ros-base-noble
 coolbeevip/phys-ros:ros-base-<git-sha>
+
+coolbeevip/phys-ros:ros-dev
+coolbeevip/phys-ros:ros-dev-jazzy-ros-base-noble
+coolbeevip/phys-ros:ros-dev-<git-sha>
 ```
 
 Each Isaac ROS layer receives a floating tag, an Isaac ROS base-version tag,
@@ -82,9 +86,8 @@ compatibility aliases. `latest` also remains an alias for the current
 `isaac-base` image. Deployments and downstream Dockerfiles should use a commit
 tag or image digest instead of a floating tag.
 
-For example, the project-specific development images can be built from the
-published reusable layers while running from the canonical `phys-ros` source
-root:
+For example, the canonical development Dockerfiles can also be built locally
+from the published layers while running from the `phys-ros` source root:
 
 ```bash
 docker buildx build \
@@ -107,12 +110,12 @@ docker buildx build \
 The workflow in `.github/workflows/docker.yml` runs when mirrored Docker files
 change on `main`, or when started manually. It:
 
-1. Builds and pushes the independent `ros-base` image.
-2. Builds and pushes `isaac-base`.
-3. Passes the resulting digest to the `isaac-perception` build.
+1. Builds and pushes `ros-base`, then passes its digest to the `ros-dev` build.
+2. Builds and pushes `isaac-base` independently.
+3. Passes the resulting Isaac base digest to the `isaac-perception` build.
 4. Passes the resulting `isaac-perception` digest to the
    `isaac-manipulation` build.
-5. Uses separate GitHub Actions caches for all four layers.
+5. Uses separate GitHub Actions caches for all five layers.
 
 Digest chaining ensures every published Isaac image set comes from the same
 workflow run even though the floating Docker Hub tags can change.
