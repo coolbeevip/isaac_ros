@@ -253,3 +253,49 @@ jobs:
 
       - name: Image Digest
         run: echo "${{ steps.build.outputs.digest }}"
+
+  isaac_dev:
+    runs-on: ubuntu-latest
+    needs: isaac_manipulation
+    outputs:
+      digest: ${{ steps.build.outputs.digest }}
+    steps:
+      - name: Check Out Repo
+        uses: actions/checkout@v4
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Docker Metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=isaac-dev
+            type=raw,value=isaac-dev-${{ env.ISAAC_ROS_TAG }}
+            type=sha,prefix=isaac-dev-
+
+      - name: Build and Push
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./docker/isaac-ros/Dockerfile.dev
+          push: true
+          platforms: linux/amd64
+          build-args: |
+            BASE_IMAGE=${{ env.IMAGE_NAME }}@${{ needs.isaac_manipulation.outputs.digest }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=isaac-dev
+          cache-to: type=gha,mode=max,scope=isaac-dev
+
+      - name: Image Digest
+        run: echo "${{ steps.build.outputs.digest }}"

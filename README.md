@@ -15,6 +15,7 @@ NVIDIA Isaac ROS (pinned digest)
   └── isaac-base
       └── isaac-perception
           └── isaac-manipulation
+              └── isaac-dev
 ```
 
 Visual perception is a required part of the robot manipulation stack, so the
@@ -31,6 +32,7 @@ docker/ros/Dockerfile.dev
 docker/isaac-ros/Dockerfile.base
 docker/isaac-ros/Dockerfile.perception
 docker/isaac-ros/Dockerfile.manipulation
+docker/isaac-ros/Dockerfile.dev
 docker/scripts/workspace-entrypoint.sh
 ```
 
@@ -38,10 +40,8 @@ This publishing repository intentionally does not copy the canonical
 Dockerfiles' alternate APT mirror configuration. Builds use the package sources
 provided by the upstream ROS and Isaac ROS base images.
 
-The self-contained `docker/ros/Dockerfile.dev` is mirrored and published here.
-The project-specific `docker/isaac-ros/Dockerfile.dev` is not mirrored or
-published because it still depends on the complete `phys-ros` source tree and
-development requirements.
+The self-contained ROS and Isaac ROS development Dockerfiles are both mirrored
+and published here.
 
 ## Published images
 
@@ -79,6 +79,10 @@ coolbeevip/phys-ros:isaac-perception-<git-sha>
 coolbeevip/phys-ros:isaac-manipulation
 coolbeevip/phys-ros:isaac-manipulation-isaac_ros_28556f8bc78a98822bd08b2d7c6fcf9b-amd64
 coolbeevip/phys-ros:isaac-manipulation-<git-sha>
+
+coolbeevip/phys-ros:isaac-dev
+coolbeevip/phys-ros:isaac-dev-isaac_ros_28556f8bc78a98822bd08b2d7c6fcf9b-amd64
+coolbeevip/phys-ros:isaac-dev-<git-sha>
 ```
 
 The former `base`, `perception`, and `manipulation` tags are published as
@@ -115,7 +119,8 @@ change on `main`, or when started manually. It:
 3. Passes the resulting Isaac base digest to the `isaac-perception` build.
 4. Passes the resulting `isaac-perception` digest to the
    `isaac-manipulation` build.
-5. Uses separate GitHub Actions caches for all five layers.
+5. Passes the resulting `isaac-manipulation` digest to the `isaac-dev` build.
+6. Uses separate GitHub Actions caches for all six layers.
 
 Digest chaining ensures every published Isaac image set comes from the same
 workflow run even though the floating Docker Hub tags can change.

@@ -1,12 +1,12 @@
-ARG BASE_IMAGE=phys-ros:ros-base
+ARG BASE_IMAGE=phys-ros:isaac-manipulation
 FROM ${BASE_IMAGE}
 
 ARG ROS_DISTRO=jazzy
 ARG ORBBEC_REF=main
 ARG PIPER_SDK_VERSION=0.6.1
 
-LABEL org.opencontainers.image.title="phys-ros:ros-dev"
-LABEL org.opencontainers.image.description="ROS 2 development environment with Dabai and Piper dependencies"
+LABEL org.opencontainers.image.title="phys-ros:isaac-dev"
+LABEL org.opencontainers.image.description="Isaac ROS development environment with Dabai and Piper dependencies"
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV ORBBEC_WS=/opt/orbbec_sdk_v1_ws
