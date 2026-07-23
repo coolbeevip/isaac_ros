@@ -1,0 +1,74 @@
+ARG BASE_IMAGE=phys-ros:ros-base
+FROM ${BASE_IMAGE}
+
+ARG ROS_DISTRO=jazzy
+ARG ORBBEC_REF=main
+
+LABEL org.opencontainers.image.title="phys-ros:ros-dev"
+LABEL org.opencontainers.image.description="ROS 2 development environment with MoveIt, Dabai, and Piper dependencies"
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV ORBBEC_WS=/opt/orbbec_sdk_v1_ws
+ENV PHYS_ROS_WS=/workspaces/phys-ros
+ENV PIP_BREAK_SYSTEM_PACKAGES=1
+ENV PIP_NO_CACHE_DIR=1
+
+SHELL ["/bin/bash", "-c"]
+
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt/lists,sharing=locked \
+    apt-get update \
+    && apt-get install -y --no-install-recommends \
+        ffmpeg \
+        python3-scipy \
+        ros-${ROS_DISTRO}-moveit \
+        ros-${ROS_DISTRO}-moveit-servo \
+        ros-${ROS_DISTRO}-moveit-setup-assistant \
+        v4l-utils
+
+RUN mkdir -p "${ORBBEC_WS}/src" \
+    && git clone --depth 1 --branch "${ORBBEC_REF}" --single-branch \
+        https://github.com/orbbec/OrbbecSDK_ROS2.git \
+        "${ORBBEC_WS}/src/OrbbecSDK_ROS2" \
+    && git -C "${ORBBEC_WS}/src/OrbbecSDK_ROS2" rev-parse HEAD \
+        > "${ORBBEC_WS}/ORBBEC_COMMIT" \
+    && if [[ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]]; then rosdep init; fi \
+    && rosdep update \
+    && source "/opt/ros/${ROS_DISTRO}/setup.bash" \
+    && rosdep install \
+        --from-paths "${ORBBEC_WS}/src/OrbbecSDK_ROS2" \
+        --ignore-src -r -y \
+    && colcon --log-base "${ORBBEC_WS}/log" build \
+        --base-paths "${ORBBEC_WS}/src/OrbbecSDK_ROS2" \
+        --build-base "${ORBBEC_WS}/build" \
+        --install-base "${ORBBEC_WS}/install" \
+        --packages-up-to orbbec_camera \
+        --event-handlers console_direct+ \
+    && rm -rf "${ORBBEC_WS}/src" "${ORBBEC_WS}/build" "${ORBBEC_WS}/log"
+
+RUN --mount=type=bind,source=.,target=/tmp/phys-ros-source,readonly \
+    --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt/lists,sharing=locked \
+    python3 -m pip install \
+        -r /tmp/phys-ros-source/requirements-dev.txt \
+        -r /tmp/phys-ros-source/requirements.txt \
+    && source "/opt/ros/${ROS_DISTRO}/setup.bash" \
+    && source "${ORBBEC_WS}/install/setup.bash" \
+    && rosdep install \
+        --from-paths \
+        /tmp/phys-ros-source/src/bringup/phys_bringup \
+        /tmp/phys-ros-source/src/capabilities/piper_dual_arm_xvla_adapter \
+        /tmp/phys-ros-source/src/sensors/cameras/orbbec/phys_orbbec_bringup \
+        /tmp/phys-ros-source/src/robots/arms/agilex/piper_ros/src/piper \
+        /tmp/phys-ros-source/src/robots/arms/agilex/piper_ros/src/piper_msgs \
+        --ignore-src --skip-keys orbbec_camera -r -y
+
+RUN usermod -aG dialout admin \
+    && mkdir -p "${PHYS_ROS_WS}" \
+    && echo "source ${ORBBEC_WS}/install/setup.bash" \
+        > /etc/profile.d/phys-ros-dev.sh \
+    && echo "source ${ORBBEC_WS}/install/setup.bash" >> /etc/bash.bashrc \
+    && echo "[ -f ${PHYS_ROS_WS}/install/setup.bash ] && source ${PHYS_ROS_WS}/install/setup.bash" \
+        >> /etc/bash.bashrc
+
+WORKDIR ${PHYS_ROS_WS}

@@ -26,6 +26,7 @@ counterparts:
 
 ```text
 docker/ros/Dockerfile.base
+docker/ros/Dockerfile.dev
 docker/isaac-ros/Dockerfile.base
 docker/isaac-ros/Dockerfile.perception
 docker/isaac-ros/Dockerfile.manipulation
@@ -36,11 +37,11 @@ This publishing repository intentionally does not copy the canonical
 Dockerfiles' alternate APT mirror configuration. Builds use the package sources
 provided by the upstream ROS and Isaac ROS base images.
 
-The project-specific `docker/ros/Dockerfile.dev` and
-`docker/isaac-ros/Dockerfile.dev` images are not mirrored or published here.
-They depend on the complete `phys-ros` source tree, Orbbec driver, Piper
-dependencies, and development requirements, so they remain owned and built by
-`phys-ros`.
+The project-specific `docker/ros/Dockerfile.dev` is mirrored for use with the
+complete `phys-ros` build context, but the current workflow does not publish it.
+The similarly project-specific `docker/isaac-ros/Dockerfile.dev` is not mirrored
+or published here. Both development images depend on the complete `phys-ros`
+source tree, Orbbec driver, Piper dependencies, and development requirements.
 
 ## Published images
 
