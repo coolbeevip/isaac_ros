@@ -21,7 +21,7 @@ Visual perception is a required part of the robot manipulation stack, so the
 
 ## Source boundary
 
-The following files are byte-for-byte mirrors of their canonical `phys-ros`
+The following files are synchronized from their canonical `phys-ros`
 counterparts:
 
 ```text
@@ -31,6 +31,10 @@ docker/isaac-ros/Dockerfile.perception
 docker/isaac-ros/Dockerfile.manipulation
 docker/scripts/workspace-entrypoint.sh
 ```
+
+This publishing repository intentionally does not copy the canonical
+Dockerfiles' alternate APT mirror configuration. Builds use the package sources
+provided by the upstream ROS and Isaac ROS base images.
 
 The project-specific `docker/ros/Dockerfile.dev` and
 `docker/isaac-ros/Dockerfile.dev` images are not mirrored or published here.
