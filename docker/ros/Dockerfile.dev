@@ -53,10 +53,12 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         --event-handlers console_direct+ \
     && rm -rf "${ORBBEC_WS}/src" "${ORBBEC_WS}/build" "${ORBBEC_WS}/log"
 
-RUN python3 -m venv --system-site-packages "${VIRTUAL_ENV}" \
+RUN /usr/bin/python3 -m pip install --break-system-packages \
+        "piper-sdk==${PIPER_SDK_VERSION}" \
+    && /usr/bin/python3 -c "import piper_sdk" \
+    && /usr/bin/python3 -m venv --system-site-packages "${VIRTUAL_ENV}" \
     && "${VIRTUAL_ENV}/bin/python" -m pip install \
         "numpy==${NUMPY_VERSION}" \
-        "piper-sdk==${PIPER_SDK_VERSION}" \
         "pre-commit==${PRE_COMMIT_VERSION}" \
         "pytest==${PYTEST_VERSION}" \
         "PyYAML==${PYYAML_VERSION}" \
